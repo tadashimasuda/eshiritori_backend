@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 // use Laravel\Socialite\Facades\Socialite;
 use Socialite;
+use App\User;
 
 class AuthController extends Controller
 {
@@ -14,8 +15,27 @@ class AuthController extends Controller
     }
     public function handleTwwiterCallback(){
         $data  = Socialite::driver('twitter')->user();
-        $name = $data->getNickName();
-        return $name;
+        $twitter_id=$data->getId();
+        //if where getId() get accesstoken
+        $socialAccount = User::firstOrNew([
+            'twitter_id' => $twitter_id,
+        ]);
+        if ($socialAccount->exists) {
+            //user already account
+            $user = User::TwitterId($socialAccount->twitter_id)->first();
+        }else{
+            //user not account
+            $user = User::create([
+                'name' => $data->getNickname(),
+                'twitter_id' => $data->getId(),
+                'img_path' => $data->getAvatar()
+            ]);
+        }
+
+        return response()->json([
+            'user' => $user,
+            'access_token' => $user->createToken(null, ['*'])->accessToken,
+        ]);
     }
     
 }
