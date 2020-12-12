@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 // use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Http\Request;
 use Socialite;
 use App\User;
 
@@ -38,4 +39,7 @@ class AuthController extends Controller
         ]);
     }
     
+    public function user(Request $request){
+        return $request->user();
+    }
 }
