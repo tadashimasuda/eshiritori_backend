@@ -1,9 +1,8 @@
 <?php
-// namespace App\Http\Controllers\Auth;
 namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
-// use Laravel\Socialite\Facades\Socialite;
 use Illuminate\Http\Request;
+use App\Http\Requests\UpdateUserRequest; 
 use Socialite;
 use App\User;
 
@@ -40,6 +39,20 @@ class AuthController extends Controller
     }
     
     public function user(Request $request){
-        return $request->user();
+        $user = $request->user();
+        return response()->json(['user' => $user]);
+    }
+
+    public function update(UpdateUserRequest $request){
+        $id =$request->user()->id;
+        $user = User::find($id);
+        $user->update([
+            'name' => $request->name,
+            'profile' => $request->profile
+        ]); 
+        return response()->json([
+            'user' => $user,
+            'access_token' => $user->createToken(null, ['*'])->accessToken,
+        ]);
     }
 }
