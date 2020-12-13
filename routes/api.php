@@ -9,5 +9,3 @@ Route::get('/oauth/twitter/callback','AuthController@handleTwwiterCallback');
 Route::middleware('auth:api')->get('/user','AuthController@user');
 Route::middleware('auth:api')->put('/user/update','AuthController@update');
 
-
-
