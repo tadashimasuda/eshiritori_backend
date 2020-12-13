@@ -42,4 +42,8 @@ class User extends Authenticatable
     public function scopeTwitterId($query,$str){
         return $query->where('twitter_id',$str);
     }
+
+    public function table(){
+        return $this->hasMany(Table::class);
+    }
 }
