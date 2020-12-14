@@ -15,7 +15,7 @@ class AuthController extends Controller
     }
     public function handleTwwiterCallback(){
         $data  = Socialite::driver('twitter')->user();
-        $twitter_id=$data->getId();
+        $twitter_id = $data->getId();
         //if where getId() get accesstoken
         $socialAccount = User::firstOrNew([
             'twitter_id' => $twitter_id,
@@ -31,10 +31,9 @@ class AuthController extends Controller
                 'img_path' => $data->getAvatar()
             ]);
         }
-
         return response()->json([
             'user' => $user,
-            'access_token' => $user->createToken(null, ['*'])->accessToken,
+            'access_token' => $user -> createToken('access_token') ->accessToken,
         ]);
     }
     
