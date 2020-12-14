@@ -16,7 +16,7 @@ class AuthController extends Controller
         $url = Socialite::driver('twitter')->redirect()->getTargetUrl();
         return response()->json(['redirect_url' => $url]);
     }
-    public function handleTwwiterCallback(){
+    public function handleTwitterCallback(){
         $data  = Socialite::driver('twitter')->user();
         $twitter_id = $data->getId();
         //if where getId() get accesstoken
