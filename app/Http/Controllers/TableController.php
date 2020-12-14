@@ -15,4 +15,15 @@ class TableController extends Controller
         $table->save();
         return 'success';
     }
+    public function update(Request $request,Table $table){
+        $table = Table::find($request->id);
+        //if $table->owner_id == $request->user()->id
+        if ($table->owner_id !== $request->user()->id) {
+            return 'error';
+        }
+        $table ->update([
+            'close' => 1
+        ]);
+        return 'success';
+    }
 }
