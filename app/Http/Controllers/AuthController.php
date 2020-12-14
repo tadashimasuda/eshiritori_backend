@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Http\Requests\UpdateUserRequest; 
+use App\Http\Resources\User as UserResourse;
 use Socialite;
 use App\User;
 
@@ -53,5 +54,11 @@ class AuthController extends Controller
             'user' => $user,
             'access_token' => $user->createToken(null, ['*'])->accessToken,
         ]);
+    }
+    
+    public function index(User $user)
+    {
+        $user= User::latestFirst()->paginate(10);
+        return UserResourse::collection($user);
     }
 }
