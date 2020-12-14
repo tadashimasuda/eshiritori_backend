@@ -4,7 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/oauth/twitter/redirect','AuthController@redirectToProvider')->middleware('session');
-Route::get('/oauth/twitter/callback','AuthController@handleTwwiterCallback');
+Route::get('/oauth/twitter/callback','AuthController@handleTwitterCallback');
 Route::middleware('auth:api')->get('/user','AuthController@user');
 Route::get('/users/{id}','AuthController@show');
 Route::get('/users','AuthController@index');
