@@ -18,7 +18,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password','twitter_id','img_path','profile'
+        'name', 'email', 'password','twitter_id','img_path','profile','social_id'
     ];
 
     /**
@@ -40,7 +40,7 @@ class User extends Authenticatable
     ];
     
     public function scopeTwitterId($query,$str){
-        return $query->where('twitter_id',$str);
+        return $query->where('social_id',$str);
     }
 
     public function table(){
