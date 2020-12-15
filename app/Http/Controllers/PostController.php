@@ -11,4 +11,8 @@ class PostController extends Controller
     {
         return $request;
     }
+
+    public function index(){
+        return 'index';
+    }
 }
