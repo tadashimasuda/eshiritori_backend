@@ -18,19 +18,20 @@ class AuthController extends Controller
     }
     public function handleTwitterCallback(){
         $data  = Socialite::driver('twitter')->user();
-        $twitter_id = $data->getId();
+        $social_id = $data->getId();
         //if where getId() get accesstoken
         $socialAccount = User::firstOrNew([
-            'twitter_id' => $twitter_id,
+            'social_id' => $social_id,
         ]);
         if ($socialAccount->exists) {
             //user already account
-            $user = User::TwitterId($socialAccount->twitter_id)->first();
+            $user = User::TwitterId($socialAccount->social_id)->first();
         }else{
             //user not account
             $user = User::create([
-                'name' => $data->getNickname(),
-                'twitter_id' => $data->getId(),
+                'social_id'=> $data->getId(),
+                'name' => $data->getName(),
+                'twitter_id' => $data->getNickname(),
                 'img_path' => $data->getAvatar()
             ]);
         }
