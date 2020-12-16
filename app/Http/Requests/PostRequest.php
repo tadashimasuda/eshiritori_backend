@@ -24,9 +24,8 @@ class PostRequest extends FormRequest
     public function rules()
     {
         return [
-            'user_id'=>'required',
-            'table_id'=>'reqired',
-            'img'=>'required'
+            'table_id'=>'required',
+            'image'=>'required'
         ];
     }
 }
