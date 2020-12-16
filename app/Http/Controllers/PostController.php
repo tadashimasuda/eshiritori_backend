@@ -42,9 +42,10 @@ class PostController extends Controller
             Storage::disk('s3')->setVisibility('post/'.$file,'public');
         });
         
-        return response('success');
+        return response()->json([
+            'message'=>'success'
+        ],200);
     }
-
     public function index(Request $request){
         if($request->q ==='top'){
             $posts = Post::limit(5)->get();
@@ -55,6 +56,6 @@ class PostController extends Controller
     }
     public function show(Request $request){
         $post = Post::find($request->id);
-        // return new PostResource($post);
+        return new PostResource($post);
     }
 }

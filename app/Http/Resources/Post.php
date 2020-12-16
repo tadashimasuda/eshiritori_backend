@@ -17,7 +17,7 @@ class Post extends JsonResource
         // return parent::toArray($request);
         return[
             'id'=>$this->id,
-            'user_id'=>$this->user_id,
+            'table_id'=>$this->table_id,
             'img_path'=>$this->img_path
         ];
     }
