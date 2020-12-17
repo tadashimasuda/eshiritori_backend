@@ -46,4 +46,7 @@ class User extends Authenticatable
     public function table(){
         return $this->hasMany(Table::class);
     }
+    public function post(){
+        return $this->hasMany(Post::class);
+    }
 }
