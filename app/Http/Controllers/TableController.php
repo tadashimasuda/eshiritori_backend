@@ -13,17 +13,25 @@ class TableController extends Controller
         // $table->user()->associate($request->user());
         $table->owner_id = $request->user()->id;
         $table->save();
-        return 'success';
+
+        return response()->json([
+            'message'=>'success'
+        ],200);
     }
     public function update(Request $request,Table $table){
         $table = Table::find($request->id);
         //if $table->owner_id == $request->user()->id
         if ($table->owner_id !== $request->user()->id) {
-            return 'error';
+            return response()->json([
+                'message'=>'ユーザー情報とテーブルオーナー情報が一致しません'
+            ],400);
         }
         $table ->update([
             'close' => 1
         ]);
-        return 'success';
+
+        return response()->json([
+            'message'=>'success'
+        ],200);
     }
 }
