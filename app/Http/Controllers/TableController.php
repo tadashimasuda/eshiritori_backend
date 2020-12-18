@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\Table as TableResource;
 use Illuminate\Http\Request;
 use App\Table;
 
@@ -33,5 +34,14 @@ class TableController extends Controller
         return response()->json([
             'message'=>'success'
         ],200);
+    }
+    public function index(Request $request)
+    {
+        if($request->q ==='top'){
+            $tables = Table::limit(5)->get();
+            return  TableResource::collection($tables);
+        }
+        $tables = Table::all();
+        return  TableResource::collection($tables);
     }
 }
