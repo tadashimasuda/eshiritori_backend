@@ -3,7 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Http\Resources\Post as PostResource;
-// use App\Http\Resources\Table as TableResource;
+use App\Http\Resources\Table as TableResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 class UserShow extends JsonResource
 {
@@ -24,7 +24,7 @@ class UserShow extends JsonResource
                 'profile'=>$this->profile,
             ],
             'posts'=>PostResource::collection($this->post),
-            // 'tables'=>TableResource::collection($this->table),
+            'tables'=>TableResource::collection($this->table),
         ];
     }
 }
