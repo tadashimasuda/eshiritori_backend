@@ -48,7 +48,7 @@ class PostController extends Controller
     }
     public function index(Request $request){
         if($request->q ==='top'){
-            $posts = Post::limit(5)->get();
+            $posts = Post::latestFirst()->limit(5)->get();
             return  PostResource::collection($posts);
         }
         $posts = Post::all();
