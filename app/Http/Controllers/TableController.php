@@ -44,4 +44,8 @@ class TableController extends Controller
         $tables = Table::all();
         return  TableResource::collection($tables);
     }
+    public function show(Request $request){
+        $table = Table::find($request->id);
+        return new TableResource($table);
+    }
 }

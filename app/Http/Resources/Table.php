@@ -18,7 +18,7 @@ class Table extends JsonResource
         // return parent::toArray($request);
         return[
             'id'=>$this->id,
-            'name'=>$this->id,
+            'name'=>$this->name,
             'owner'=>[
                 'id'=>$this->user->id,
                 'name'=>$this->user->name,
