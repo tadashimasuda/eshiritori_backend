@@ -18,7 +18,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password','twitter_id','img_path','profile','social_id'
+        'id','name', 'email', 'password','twitter_id','img_path','profile','social_id'
     ];
 
     /**
@@ -44,6 +44,9 @@ class User extends Authenticatable
     }
 
     public function table(){
-        return $this->hasMany(Table::class);
+        return $this->hasMany(Table::class,'id');
+    }
+    public function post(){
+        return $this->hasMany(Post::class);
     }
 }
