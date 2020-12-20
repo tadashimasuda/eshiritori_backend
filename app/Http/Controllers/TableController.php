@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\Table as TableResource;
+use App\Http\Resources\TableShow as TableShowResource;
+
 use Illuminate\Http\Request;
 use App\Table;
 
@@ -46,6 +48,6 @@ class TableController extends Controller
     }
     public function show(Request $request){
         $table = Table::find($request->id);
-        return new TableResource($table);
+        return new TableShowResource($table);
     }
 }
