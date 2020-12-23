@@ -2,10 +2,10 @@
 
 namespace App\Http\Resources;
 
-use App\Http\Resources\User as UserResource;
+use App\Http\Resources\Post as PostResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class Table extends JsonResource
+class TableShow extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -19,11 +19,12 @@ class Table extends JsonResource
         return[
             'id'=>$this->id,
             'name'=>$this->name,
-            'owner' => new UserResource($this->user),
-            'post'=>[
-                'id'=>$this->post[0]->id,
-                'img_path'=>$this->post[0]->img_path,
-            ]
+            'owner'=>[
+                'id'=>$this->user->id,
+                'name'=>$this->user->name,
+                'img_path'=>$this->user->img_path,
+            ],
+            'post'=>PostResource::collection($this->post)
         ];
     }
 }
