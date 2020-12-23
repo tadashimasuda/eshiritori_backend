@@ -12,8 +12,8 @@ Route::get('/users','AuthController@index');
 Route::middleware('auth:api')->put('/user/update','AuthController@update');
 
 Route::middleware('auth:api')->post('/table','TableController@store');
+Route::get('/tables/{id}/post','PostController@show');
 Route::get('/tables','TableController@index');
-Route::get('/tables/{id}/post','TableController@show');
 Route::middleware('auth:api')->put('/table/{id}/update','TableController@update');
 
 Route::middleware('auth:api')->post('/post','PostController@store');

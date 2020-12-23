@@ -1,11 +1,12 @@
 <?php
 
 namespace App;
-
+use App\Traits\Orderable;
 use Illuminate\Database\Eloquent\Model;
 
 class Post extends Model
 {
+    use Orderable;
     protected $fillable = [
         'user_id','table_id','img_path'
     ];
