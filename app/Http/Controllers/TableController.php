@@ -28,10 +28,14 @@ class TableController extends Controller
         $user_id = $request->user()->id;
 
         DB::transaction(function () use ($name,$decodedImage,$user_id){
-            $table = new Table;
-            $table->name = $name;
-            $table->owner_id = $user_id;
-            $table->save();
+            // $table = new Table;
+            // $table->name = $name;
+            // $table->owner_id = $user_id;
+            // $table->save();
+            $table = Table::create([
+                'name' => $name,
+                'owner_id' => $user_id,
+            ]);
 
             $id = Str::uuid();
             $file = $id->toString();
