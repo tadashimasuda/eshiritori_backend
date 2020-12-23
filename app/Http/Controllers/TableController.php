@@ -4,22 +4,56 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\Table as TableResource;
 use App\Http\Resources\TableShow as TableShowResource;
-
+use App\Http\Requests\PostTableRequest;
 use Illuminate\Http\Request;
 use App\Table;
+use App\Post;
+use Storage;
+use Str;
+use Illuminate\Support\Facades\DB;
 
 class TableController extends Controller
 {
-    public function store(Request $request,Table $table){
-        $table = new Table;
-		$table->name = $request->name;
-        // $table->user()->associate($request->user());
-        $table->owner_id = $request->user()->id;
-        $table->save();
+    public function store(PostTableRequest $request,Table $table){
+
+        //get all
+        $params = $request->json()->all();
+
+        //image
+        list(, $image) = explode(';', $params['image']);
+        list(, $image) = explode(',', $image);
+        $decodedImage = base64_decode($image);
+
+        $name = $request->name;
+        $user_id = $request->user()->id;
+
+        DB::transaction(function () use ($name,$decodedImage,$user_id){
+            $table = new Table;
+            $table->name = $name;
+            $table->owner_id = $user_id;
+            $table->save();
+
+            $id = Str::uuid();
+            $file = $id->toString();
+
+            Post::create([
+                'user_id' => $user_id,
+                'table_id' => $table->id,
+                'img_path'=>$file
+            ]);
+
+            $isSuccess = Storage::disk('s3')->put('post/'.$file, $decodedImage);
+            if (!$isSuccess) {
+                throw new Exception('ファイルのアップでエラー');
+            }
+            Storage::disk('s3')->setVisibility('post/'.$file,'public');
+    
+        });
 
         return response()->json([
             'message'=>'success'
         ],200);
+        
     }
     public function update(Request $request,Table $table){
         $table = Table::find($request->id);
