@@ -55,7 +55,7 @@ class PostController extends Controller
         return  PostResource::collection($posts);
     }
     public function show(Request $request){
-        $post = Post::find($request->id);
+        $post = Post::TableId($request->id)->latestFirst()->first();
         return new PostResource($post);
     }
 }
