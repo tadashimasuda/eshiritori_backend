@@ -5,21 +5,27 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/oauth/twitter/redirect','AuthController@redirectToProvider')->middleware('session');
 Route::get('/oauth/twitter/callback','AuthController@handleTwitterCallback');
-Route::middleware('auth:api')->get('/user/followers','AuthController@followers');
-Route::middleware('auth:api')->get('/user','AuthController@user');
+
+Route::group(['prefix'=>'user'],function(){
+    Route::middleware('auth:api')->get('/followers','AuthController@followers');
+    Route::middleware('auth:api')->get('/','AuthController@user');
+    Route::middleware('auth:api')->put('/update','AuthController@update');
+});
+
 Route::get('/users/{id}','AuthController@show');
 Route::get('/users','AuthController@index');
 
-Route::middleware('auth:api')->put('/user/update','AuthController@update');
+Route::group(['prefix'=>'tables'],function(){
+    Route::middleware('auth:api')->post('/','TableController@store');
+    Route::get('/{id}/post','PostController@show');
+    Route::get('/{id}/user','TableController@user');
+    Route::get('/{id}','TableController@show');
+    Route::get('/','TableController@index');
+    Route::middleware('auth:api')->put('/{id}/update','TableController@update');
+});
 
-Route::middleware('auth:api')->post('/table','TableController@store');
-Route::middleware('auth:api')->get('/tables/{id}/post','PostController@show');
-Route::get('/tables/{id}','TableController@show');
-Route::get('/tables','TableController@index');
-Route::middleware('auth:api')->put('/table/{id}/update','TableController@update');
-
-Route::middleware('auth:api')->post('/post','PostController@store');
-Route::get('/posts','PostController@index');
-Route::get('/posts/{id}','PostController@show');
-
-
+Route::group(['prefix'=>'posts'],function(){
+    Route::middleware('auth:api')->post('/','PostController@store');
+    Route::get('/','PostController@index');
+    Route::get('/{id}','PostController@show');
+});

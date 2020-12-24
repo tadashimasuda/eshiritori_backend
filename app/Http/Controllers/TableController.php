@@ -88,4 +88,9 @@ class TableController extends Controller
         $table = Table::find($request->id);
         return new TableShowResource($table);
     }
+    public function user(Request $request)
+    {
+        $tables = Table::where('owner_id',$request->id)->get();
+        return  TableResource::collection($tables);
+    }
 }

@@ -19,6 +19,6 @@ class Post extends Model
     }
     public function table()
     {
-        return $this->belongsTo(Post::class);
+        return $this->belongsTo(Table::class);
     }
 }

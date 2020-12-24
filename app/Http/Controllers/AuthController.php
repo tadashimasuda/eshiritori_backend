@@ -81,34 +81,42 @@ class AuthController extends Controller
         $connection = new TwitterOAuth($consumer_key, $consumer_secret, $access_token, $access_token_secret); 
 
         if ($request->next_cursor) {
+            try {
+                $options = [
+                    "user_id" => $request->user()->social_id,
+                    'cursor' => $request->next_cursor
+                ];
+                $followers = $connection->get('followers/list', $options); 
+                $followers_list = [];
+                foreach($followers->users as $follower){
+                    $arange = array(
+                        'name' =>$follower->name,
+                        'screen_name' =>$follower->screen_name,
+                    );
+                    array_push($followers_list,$arange);
+                }
+                    return response()->json(['followers'=>$followers_list,'next_cursor'=>$followers->next_cursor], 200);
+            } catch (Exception $e) {
+                return response()->json(['message'=>$e->getMessage()], 400);
+            }
+        }
+
+        try {
             $options = [
                 "user_id" => $request->user()->social_id,
-                'cursor' => $request->next_cursor
             ];
             $followers = $connection->get('followers/list', $options); 
             $followers_list = [];
             foreach($followers->users as $follower){
                 $arange = array(
                     'name' =>$follower->name,
-                    'screeen_name' =>$follower->screen_name,
+                    'screen_name' =>$follower->screen_name,
                 );
                 array_push($followers_list,$arange);
             }
-            return response()->json(['followers'=>$followers_list,'next_cursor'=>$followers->next_cursor], 200);
+                return response()->json(['followers'=>$followers_list,'next_cursor'=>$followers->next_cursor], 200);
+        } catch (Exception $e) {
+            return response()->json(['message'=>$e->getMessage()], 400);
         }
-
-        $options = [
-            "user_id" => $request->user()->social_id,
-        ];
-        $followers = $connection->get('followers/list', $options); 
-        $followers_list = [];
-        foreach($followers->users as $follower){
-            $arange = array(
-                'name' =>$follower->name,
-                'screeen_name' =>$follower->screen_name,
-            );
-            array_push($followers_list,$arange);
         }
-        return response()->json(['followers'=>$followers_list,'next_cursor'=>$followers->next_cursor], 200);
-    }
 }

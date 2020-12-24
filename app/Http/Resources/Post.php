@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Resources\Table;
 use App\Http\Resources\User;
 class Post extends JsonResource
 {
@@ -24,6 +25,10 @@ class Post extends JsonResource
                 'twitter_id'=>$this->user->twitter_id,
                 'name'=>$this->user->name,
                 'img_path'=>$this->user->img_path,
+            ],
+            'table' => [
+                'id' => $this->table->id,
+                'name' => $this->table->name
             ]
         ];
     }
