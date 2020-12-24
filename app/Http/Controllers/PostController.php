@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests\PostRequest;
 use App\Http\Resources\Post as PostResource;
 use Prophecy\Exception\Doubler\ReturnByReferenceException;
+use Abraham\TwitterOAuth\TwitterOAuth;
 
 class PostController extends Controller
 {
@@ -56,7 +57,6 @@ class PostController extends Controller
     }
     public function show(Request $request){
         $post = Post::TableId($request->id)->latestFirst()->first();
-
         return new PostResource($post);
     }
 }

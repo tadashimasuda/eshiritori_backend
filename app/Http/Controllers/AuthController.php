@@ -8,6 +8,8 @@ use App\Http\Resources\UserShow as UserShowResourse;
 
 use Socialite;
 use App\User;
+use Abraham\TwitterOAuth\TwitterOAuth;
+
 
 class AuthController extends Controller
 {
@@ -69,5 +71,26 @@ class AuthController extends Controller
     {
         $user = User::find($request->id);
         return new UserShowResourse($user);
+    }
+    public function followers(Request $request)
+    {
+        $consumer_key = config('twitter.twitter-api'); 
+        $consumer_secret = config('twitter.twitter-api-secret'); 
+        $access_token = config('twitter.twitter-token'); 
+        $access_token_secret = config('twitter.twitter-token-secret'); 
+        $connection = new TwitterOAuth($consumer_key, $consumer_secret, $access_token, $access_token_secret); 
+        $options = [
+            "user_id" => $request->user()->social_id,
+        ];
+        $followers = $connection->get('followers/list', $options); 
+        $followers_list = [];
+        foreach($followers->users as $follower){
+            $arange = array(
+                'name' =>$follower->name,
+                'screeen_name' =>$follower->screen_name,
+            );
+            array_push($followers_list,$arange);
+        }
+        return response()->json(['followers'=>$followers_list,'next_cursor'=>$followers->next_cursor], 200);
     }
 }
