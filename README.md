@@ -1,5 +1,5 @@
 ### Backend
-frontend( [github]:https://github.com/tadashimasuda/eshiritori-frontend/ )
+frontend( [github]:https://github.com/tadashimasuda/eshiritori_frontend )
 
 ## 作った理由
    - Twitterカード（OGP）を使ったサービスを開発したかったため。
