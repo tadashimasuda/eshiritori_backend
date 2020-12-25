@@ -49,3 +49,6 @@ frontend( [github]:https://github.com/tadashimasuda/eshiritori_frontend )
 - サービス
     - ストレージサービス
         AWS S3
+        
+## 実装予定
+- いいね機能、お気に入り機能、通知機能
