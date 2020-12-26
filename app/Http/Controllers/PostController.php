@@ -44,7 +44,7 @@ class PostController extends Controller
         });
         
         return response()->json([
-            'message'=>'success'
+            'message'=>'success',
         ],200);
     }
     public function index(Request $request){
@@ -57,6 +57,10 @@ class PostController extends Controller
     }
     public function show(Request $request){
         $post = Post::TableId($request->id)->latestFirst()->first();
-        return new PostResource($post);
+        return response()->json([
+            'id' => $post->id,
+            'table_id' => $post->table_id,
+            'img_path' => $post->img_path,
+        ]);
     }
 }
