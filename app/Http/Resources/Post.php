@@ -29,7 +29,8 @@ class Post extends JsonResource
             'table' => [
                 'id' => $this->table->id,
                 'name' => $this->table->name
-            ]
+            ],
+            'created_at' => $this->created_at->format('m月d日')
         ];
     }
 }
