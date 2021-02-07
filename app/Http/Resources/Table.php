@@ -23,7 +23,8 @@ class Table extends JsonResource
             'post'=>[
                 'id'=>$this->post[0]->id,
                 'img_path'=>$this->post[0]->img_path,
-            ]
+            ],
+            'created_at'=>$this->created_at->format('m月d日')
         ];
     }
 }
