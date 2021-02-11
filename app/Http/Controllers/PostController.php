@@ -13,8 +13,7 @@ use Abraham\TwitterOAuth\TwitterOAuth;
 
 class PostController extends Controller
 {
-    public function store(PostRequest $request,Post $post)
-    {
+    public function store(PostRequest $request,Post $post){
         //get all
         $params = $request->json()->all();
 
@@ -30,7 +29,7 @@ class PostController extends Controller
             $id = Str::uuid();
             $file = $id->toString();
 
-            Post::create([
+            $post_id = Post::create([
                 'user_id' => $user_id,
                 'table_id' => $table_id,
                 'img_path'=>$file
@@ -42,9 +41,9 @@ class PostController extends Controller
             }
             Storage::disk('s3')->setVisibility('post/'.$file,'public');
         });
-        
+        $post = Post::latestFirst()->first();
         return response()->json([
-            'message'=>'success',
+            'post_id'=> $post->id
         ],200);
     }
     public function index(Request $request){
@@ -56,7 +55,7 @@ class PostController extends Controller
         return  PostResource::collection($posts);
     }
     public function show(Request $request){
-        $post = Post::TableId($request->id)->latestFirst()->first();
+        $post = Post::find($request->id);
         return response()->json([
             'id' => $post->id,
             'table_id' => $post->table_id,
