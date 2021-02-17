@@ -86,7 +86,7 @@ class TableController extends Controller
     }
     public function show(Request $request){
         $table = Table::find($request->id);
-        return new TableShowResource($table);
+        return new TableResource($table);
     }
     public function user(Request $request)
     {

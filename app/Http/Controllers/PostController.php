@@ -50,6 +50,15 @@ class PostController extends Controller
         if($request->q ==='top'){
             $posts = Post::latestFirst()->limit(5)->get();
             return  PostResource::collection($posts);
+        }elseif ($request->table) {
+            $table_id = $request->table;
+            $posts_check = Post::where('table_id',$table_id)->exists();
+            if ($posts_check) {
+                $posts = Post::where('table_id',$table_id)->latestFirst()->paginate(5);
+                return  PostResource::collection($posts);
+            }else{
+                return response()->json(['message' => 'not data'],404);
+            }
         }
         $posts = Post::all();
         return  PostResource::collection($posts);
