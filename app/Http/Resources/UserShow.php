@@ -22,6 +22,7 @@ class UserShow extends JsonResource
                 'name'=>$this->name,
                 'img_path'=>$this->img_path,
                 'profile'=>$this->profile,
+                'twitter_id'=>$this->twitter_id
             ],
             'posts'=>PostResource::collection($this->post),
             'tables'=>TableResource::collection($this->table),
