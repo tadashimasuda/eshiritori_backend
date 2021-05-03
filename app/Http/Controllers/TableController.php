@@ -78,7 +78,7 @@ class TableController extends Controller
     public function index(Request $request)
     {
         if($request->q ==='top'){
-            $tables = Table::latestFirst()->limit(5)->get();
+            $tables = Table::latestFirst()->offset(1)->limit(5)->get();
             return  TableResource::collection($tables);
         }
         $tables = Table::all();

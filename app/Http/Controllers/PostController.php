@@ -48,7 +48,7 @@ class PostController extends Controller
     }
     public function index(Request $request){
         if($request->q ==='top'){
-            $posts = Post::latestFirst()->limit(5)->get();
+            $posts = Post::latestFirst()->offset(1)->limit(5)->get();
             return  PostResource::collection($posts);
         }elseif ($request->table) {
             $table_id = $request->table;
@@ -65,7 +65,8 @@ class PostController extends Controller
         return  PostResource::collection($posts);
     }
     public function show(Request $request){
-        $post = Post::find($request->id);
+        //table_id中のpostで最新のid取得
+        $post = Post::LatestFirstTablePost($request->id);
         return response()->json([
             'id' => $post->id,
             'table_id' => $post->table_id,

@@ -1,7 +1,7 @@
 <?php
 
 namespace App;
-
+use App\Traits\Orderable;
 use Illuminate\Database\Eloquent\Model;
 
 class Table extends Model
@@ -11,6 +11,7 @@ class Table extends Model
      *
      * @var array
      */
+    use Orderable;
     protected $fillable = [
         'id','name','owner_id','close'
     ];

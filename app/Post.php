@@ -13,6 +13,9 @@ class Post extends Model
     public function scopeTableId($query,$str){
         return $query->where('table_id',$str);
     }
+    public function scopeLatestFirstTablePost($query,$str){
+        return $query->where('table_id',$str)->latestFirst()->first();
+    }
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -21,4 +24,5 @@ class Post extends Model
     {
         return $this->belongsTo(Table::class);
     }
+    
 }
