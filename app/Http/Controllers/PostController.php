@@ -54,7 +54,8 @@ class PostController extends Controller
             $table_id = $request->table;
             $posts_check = Post::where('table_id',$table_id)->exists();
             if ($posts_check) {
-                $posts = Post::where('table_id',$table_id)->latestFirst()->paginate(5);
+                // $posts = Post::where('table_id',$table_id)->latestFirst()->paginate(5);
+                $posts = Post::where('table_id',$table_id)->latestFirst()->paginate(5)->appends(array('table'=>$table_id));
                 return  PostResource::collection($posts);
             }else{
                 return response()->json(['message' => 'not data'],404);
