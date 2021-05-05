@@ -19,6 +19,7 @@ class Table extends JsonResource
         return[
             'id'=>$this->id,
             'name'=>$this->name,
+            'close' => $this->close,
             'owner' => new UserResource($this->user),
             'post'=>[
                 'id'=>$this->post[0]->id,
