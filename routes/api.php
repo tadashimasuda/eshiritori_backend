@@ -17,7 +17,7 @@ Route::get('/users','AuthController@index');
 
 Route::group(['prefix'=>'tables'],function(){
     Route::middleware('auth:api')->post('/','TableController@store');
-    Route::get('/{id}/post','PostController@show');
+    Route::get('/{id}/post','PostController@LatestFirstTablePost');
     Route::get('/{id}/user','TableController@user');
     Route::get('/{id}','TableController@show');
     Route::get('/','TableController@index');
