@@ -64,13 +64,21 @@ class PostController extends Controller
         $posts = Post::all();
         return  PostResource::collection($posts);
     }
+    // public function show(Request $request){
+    //     //table_id中のpostで最新のid取得
+    //     $post = Post::LatestFirstTablePost($request->id);
+    //     return response()->json([
+    //         'id' => $post->id,
+    //         'table_id' => $post->table_id,
+    //         'img_path' => $post->img_path,
+    //     ]);
+    // }
     public function show(Request $request){
-        //table_id中のpostで最新のid取得
-        $post = Post::LatestFirstTablePost($request->id);
+        $post = Post::find($request->id);
         return response()->json([
-            'id' => $post->id,
-            'table_id' => $post->table_id,
-            'img_path' => $post->img_path,
-        ]);
+                    'id' => $post->id,
+                    'table_id' => $post->table_id,
+                    'img_path' => $post->img_path,
+                ]);
     }
 }

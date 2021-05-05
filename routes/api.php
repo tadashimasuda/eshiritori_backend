@@ -27,5 +27,5 @@ Route::group(['prefix'=>'tables'],function(){
 Route::group(['prefix'=>'posts'],function(){
     Route::middleware('auth:api')->post('/','PostController@store');
     Route::get('/','PostController@index');
-    // Route::get('/{id}','PostController@show');
+    Route::get('/{id}','PostController@show');
 });
