@@ -16,6 +16,9 @@ class Table extends Model
         'id','name','owner_id','close'
     ];
 
+    public function scopeOwnerId($query,$str){
+      return $query->where('owner_id',$str);
+    }
     public function user() {
 		  return $this->belongsTo(User::class,'owner_id');
     }

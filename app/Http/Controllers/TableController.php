@@ -8,9 +8,11 @@ use App\Http\Requests\PostTableRequest;
 use Illuminate\Http\Request;
 use App\Table;
 use App\Post;
+use App\User;
 use Storage;
 use Str;
 use Illuminate\Support\Facades\DB;
+use phpDocumentor\Reflection\DocBlock\Tags\Var_;
 
 class TableController extends Controller
 {
@@ -28,10 +30,7 @@ class TableController extends Controller
         $user_id = $request->user()->id;
 
         DB::transaction(function () use ($name,$decodedImage,$user_id){
-            // $table = new Table;
-            // $table->name = $name;
-            // $table->owner_id = $user_id;
-            // $table->save();
+            
             $table = Table::create([
                 'name' => $name,
                 'owner_id' => $user_id,
@@ -61,16 +60,10 @@ class TableController extends Controller
     }
     public function update(Request $request,Table $table){
         $table = Table::find($request->id);
-        //if $table->owner_id == $request->user()->id
-        if ($table->owner_id !== $request->user()->id) {
-            return response()->json([
-                'message'=>'ユーザー情報とテーブルオーナー情報が一致しません'
-            ],400);
-        }
-        $table ->update([
+        $this->authorize('update',$table);
+        $table->update([
             'close' => 1
         ]);
-
         return response()->json([
             'message'=>'success'
         ],200);
@@ -78,10 +71,10 @@ class TableController extends Controller
     public function index(Request $request)
     {
         if($request->q ==='top'){
-            $tables = Table::latestFirst()->offset(1)->limit(5)->get();
+            $tables = Table::with('post')->latestFirst()->offset(1)->limit(5)->get();
             return  TableResource::collection($tables);
         }
-        $tables = Table::all();
+        $tables = Table::with('post')->latestFirst()->get();
         return  TableResource::collection($tables);
     }
     public function show(Request $request){
@@ -90,7 +83,7 @@ class TableController extends Controller
     }
     public function user(Request $request)
     {
-        $tables = Table::where('owner_id',$request->id)->get();
+        $tables = Table::with('post')->OwnerId($request->id)->latestFirst()->get();
         return  TableResource::collection($tables);
     }
 }

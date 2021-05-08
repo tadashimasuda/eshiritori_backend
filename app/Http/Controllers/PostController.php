@@ -48,14 +48,13 @@ class PostController extends Controller
     }
     public function index(Request $request){
         if($request->q ==='top'){
-            $posts = Post::latestFirst()->offset(1)->limit(5)->get();
+            $posts = Post::with(['table','user'])->latestFirst()->offset(1)->limit(5)->get();
             return  PostResource::collection($posts);
         }elseif ($request->table) {
             $table_id = $request->table;
-            $posts_check = Post::where('table_id',$table_id)->exists();
+            $posts_check = Post::TableId($table_id)->exists();
             if ($posts_check) {
-                // $posts = Post::where('table_id',$table_id)->latestFirst()->paginate(5)->appends(array('table'=>$table_id));
-                $posts = Post::where('table_id',$table_id)->latestFirst()->get();
+                $posts = Post::with(['table','user'])->TableId($table_id)->latestFirst()->get();
                 return  PostResource::collection($posts);
             }else{
                 return response()->json(['message' => 'not data'],404);
