@@ -16,7 +16,7 @@ frontend( [github]:https://github.com/tadashimasuda/eshiritori_frontend )
 
 ![eshiritori](https://user-images.githubusercontent.com/51233312/117447425-7b082600-af78-11eb-8969-79dfd9b8b9e5.png)
 
-## 注力した点
+## 注力した点(Backend)
 - N+1の解決
    - 無駄なSQLの発行を改善した。
 - 認可機能の実装
