@@ -8,6 +8,7 @@ use App\Http\Requests\PostTableRequest;
 use Illuminate\Http\Request;
 use App\Table;
 use App\Post;
+use App\User;
 use Storage;
 use Str;
 use Illuminate\Support\Facades\DB;
@@ -59,15 +60,10 @@ class TableController extends Controller
     }
     public function update(Request $request,Table $table){
         $table = Table::find($request->id);
-        if ($table->owner_id !== $request->user()->id) {
-            return response()->json([
-                'message'=>'ユーザー情報とテーブルオーナー情報が一致しません'
-            ],400);
-        }
-        $table ->update([
+        $this->authorize('update',$table);
+        $table->update([
             'close' => 1
         ]);
-
         return response()->json([
             'message'=>'success'
         ],200);
