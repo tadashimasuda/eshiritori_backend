@@ -17,9 +17,12 @@ frontend( [github]:https://github.com/tadashimasuda/eshiritori_frontend )
 ![eshiritori](https://user-images.githubusercontent.com/51233312/117447425-7b082600-af78-11eb-8969-79dfd9b8b9e5.png)
 
 ## 注力した点
-- N+1
-    無駄なSQLの発行を改善した。
-
+- N+1の解決
+   - 無駄なSQLの発行を改善した。
+- 認可機能の実装
+   - テーブルの更新を権限のあるユーザのみ実行できるようにした。
+- AWS S3を用いた画像アップロード、トランザクション処理　
+   - base64でデコードした画像をAWS S3にアップロードする際にDBの一貫性が失われないようにトランザクション処理を用いた。
 ## 機能
 - ログイン機能
 - 新規登録機能
