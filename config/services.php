@@ -33,6 +33,6 @@ return [
     'twitter' => [
         'client_id' => env('TWITTER_CLIENT_ID'),
         'client_secret' => env('TWITTER_CLIENT_SECRET'),
-        'redirect' => env('http://127.0.0.1:8000/api/oauth//twitter/redirect')
+        'redirect' => env('https://eshiritori.herokuapp.com/api/oauth/twitter/redirect')
     ],
 ];
