@@ -33,6 +33,6 @@ return [
     'twitter' => [
         'client_id' => env('TWITTER_CLIENT_ID'),
         'client_secret' => env('TWITTER_CLIENT_SECRET'),
-        'redirect' => env('TWITTER_CLIENT_CALLBACK')
+        'redirect' => env('http://ec2-18-178-50-251.ap-northeast-1.compute.amazonaws.com/api/oauth/twitter/redirect')
     ],
 ];
