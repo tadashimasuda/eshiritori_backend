@@ -7,6 +7,10 @@ Route::get('/oauth/twitter/redirect','AuthController@redirectToProvider')->middl
 Route::get('/oauth/twitter/callback','AuthController@handleTwitterCallback');
 
 Route::group(['prefix'=>'user'],function(){
+
+    //create user mail
+    Route::post('/','AuthController@store');
+   
     Route::middleware('auth:api')->get('/followers','AuthController@followers');
     Route::middleware('auth:api')->get('/','AuthController@user');
     Route::middleware('auth:api')->put('/update','AuthController@update');

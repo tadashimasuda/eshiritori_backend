@@ -1,8 +1,10 @@
 <?php
 namespace App\Http\Controllers;
+
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Http\Requests\UpdateUserRequest; 
+use App\Http\Requests\CreateUserRequest; 
 use App\Http\Resources\User as UserResourse;
 use App\Http\Resources\UserShow as UserShowResourse;
 
@@ -43,6 +45,19 @@ class AuthController extends Controller
         ]);
     }
     
+    public function store(CreateUserRequest $request){
+        
+        $user = User::create([
+            'name'=> $request->name,
+            'password,'=> bcrypt($request->password),
+            'email'=> $request->email
+        ]);
+        return response()->json([
+            'user' => $user,
+            'access_token' => $user->createToken(null, ['*'])->accessToken,
+        ]);
+    }
+
     public function user(Request $request){
         $user = $request->user();
         return response()->json(['user' => $user]);
@@ -60,7 +75,7 @@ class AuthController extends Controller
             'access_token' => $user->createToken(null, ['*'])->accessToken,
         ]);
     }
-    
+
     public function index(User $user)
     {
         $user= User::latestFirst()->paginate(10);
