@@ -3,8 +3,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Http\Requests\UpdateUserRequest; 
-use App\Http\Requests\CreateUserRequest; 
+use App\Http\Requests\UpdateUserRequest;
+use App\Http\Requests\CreateUserRequest;
+use App\Http\Requests\LoginUserRequest;
 use App\Http\Resources\User as UserResourse;
 use App\Http\Resources\UserShow as UserShowResourse;
 
@@ -49,13 +50,30 @@ class AuthController extends Controller
         
         $user = User::create([
             'name'=> $request->name,
-            'password,'=> bcrypt($request->password),
+            'password'=> bcrypt($request->password),
             'email'=> $request->email
         ]);
         return response()->json([
             'user' => $user,
             'access_token' => $user->createToken(null, ['*'])->accessToken,
         ]);
+    }
+
+    public function login(LoginUserRequest $request){
+        
+        $user = User::where('email', $request->email)->first();
+        if(!$token = auth()->attempt($request->only(['email','password']))){
+            return response()->json([
+                'errors' =>[
+                    'email'=>['メールアドレスとパスワードが一致しませんでした。']
+                ]
+            ],422);
+        }else{
+            return response()->json([
+                'user' => $user,
+                'access_token' => $user->createToken(null, ['*'])->accessToken,
+            ],200);
+        }
     }
 
     public function user(Request $request){

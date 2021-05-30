@@ -10,6 +10,7 @@ Route::group(['prefix'=>'user'],function(){
 
     //create user mail
     Route::post('/','AuthController@store');
+    Route::post('/login','AuthController@login');
    
     Route::middleware('auth:api')->get('/followers','AuthController@followers');
     Route::middleware('auth:api')->get('/','AuthController@user');
