@@ -3,6 +3,7 @@
 namespace Doctrine\DBAL\Query\Expression;
 
 use Doctrine\DBAL\Connection;
+use Doctrine\Deprecations\Deprecation;
 
 use function func_get_arg;
 use function func_get_args;
@@ -40,13 +41,29 @@ class ExpressionBuilder
     }
 
     /**
-     * Creates a conjunction of the given boolean expressions.
+     * Creates a conjunction of the given expressions.
      *
-     * Example:
+     * @param string|CompositeExpression $expression
+     * @param string|CompositeExpression ...$expressions
+     */
+    public function and($expression, ...$expressions): CompositeExpression
+    {
+        return CompositeExpression::and($expression, ...$expressions);
+    }
+
+    /**
+     * Creates a disjunction of the given expressions.
      *
-     *     [php]
-     *     // (u.type = ?) AND (u.role = ?)
-     *     $expr->andX('u.type = ?', 'u.role = ?'));
+     * @param string|CompositeExpression $expression
+     * @param string|CompositeExpression ...$expressions
+     */
+    public function or($expression, ...$expressions): CompositeExpression
+    {
+        return CompositeExpression::or($expression, ...$expressions);
+    }
+
+    /**
+     * @deprecated Use `and()` instead.
      *
      * @param mixed $x Optional clause. Defaults = null, but requires
      *                 at least one defined when converting to string.
@@ -55,17 +72,17 @@ class ExpressionBuilder
      */
     public function andX($x = null)
     {
+        Deprecation::trigger(
+            'doctrine/dbal',
+            'https://github.com/doctrine/dbal/pull/3851',
+            'ExpressionBuilder::andX() is deprecated, use ExpressionBuilder::and() instead.'
+        );
+
         return new CompositeExpression(CompositeExpression::TYPE_AND, func_get_args());
     }
 
     /**
-     * Creates a disjunction of the given boolean expressions.
-     *
-     * Example:
-     *
-     *     [php]
-     *     // (u.type = ?) OR (u.role = ?)
-     *     $qb->where($qb->expr()->orX('u.type = ?', 'u.role = ?'));
+     * @deprecated Use `or()` instead.
      *
      * @param mixed $x Optional clause. Defaults = null, but requires
      *                 at least one defined when converting to string.
@@ -74,6 +91,12 @@ class ExpressionBuilder
      */
     public function orX($x = null)
     {
+        Deprecation::trigger(
+            'doctrine/dbal',
+            'https://github.com/doctrine/dbal/pull/3851',
+            'ExpressionBuilder::orX() is deprecated, use ExpressionBuilder::or() instead.'
+        );
+
         return new CompositeExpression(CompositeExpression::TYPE_OR, func_get_args());
     }
 

@@ -39,6 +39,8 @@ use function substr_count;
 /**
  * The SQLServerPlatform provides the behavior, features and SQL dialect of the
  * Microsoft SQL Server database platform.
+ *
+ * @deprecated Use SQL Server 2012 or newer
  */
 class SQLServerPlatform extends AbstractPlatform
 {
@@ -227,13 +229,12 @@ class SQLServerPlatform extends AbstractPlatform
         }
 
         return sprintf(
-            <<<SQL
-IF EXISTS (SELECT * FROM sysobjects WHERE name = '%s')
-    ALTER TABLE %s DROP CONSTRAINT %s
-ELSE
-    DROP INDEX %s ON %s
-SQL
-            ,
+            "
+                IF EXISTS (SELECT * FROM sysobjects WHERE name = '%s')
+                    ALTER TABLE %s DROP CONSTRAINT %s
+                ELSE
+                    DROP INDEX %s ON %s
+            ",
             $index,
             $table,
             $index,
@@ -482,11 +483,14 @@ SQL
             }
 
             $columnDef    = $column->toArray();
-            $queryParts[] = 'ADD ' . $this->getColumnDeclarationSQL($column->getQuotedName($this), $columnDef);
-
+            $addColumnSql = 'ADD ' . $this->getColumnDeclarationSQL($column->getQuotedName($this), $columnDef);
             if (isset($columnDef['default'])) {
-                $queryParts[] = $this->getAlterTableAddDefaultConstraintClause($diff->name, $column);
+                $addColumnSql .= ' CONSTRAINT ' .
+                    $this->generateDefaultConstraintName($diff->name, $column->getQuotedName($this)) .
+                    $this->getDefaultValueDeclarationSQL($columnDef);
             }
+
+            $queryParts[] = $addColumnSql;
 
             $comment = $this->getColumnComment($column);
 
@@ -530,7 +534,7 @@ SQL
                     );
                 } elseif ($hasFromComment && ! $hasComment) {
                     $commentsSql[] = $this->getDropColumnCommentSQL($diff->name, $column->getQuotedName($this));
-                } elseif ($hasComment) {
+                } elseif (! $hasFromComment && $hasComment) {
                     $commentsSql[] = $this->getCreateColumnCommentSQL(
                         $diff->name,
                         $column->getQuotedName($this),
@@ -1192,6 +1196,20 @@ SQL
     /**
      * {@inheritDoc}
      */
+    public function getAsciiStringTypeDeclarationSQL(array $column): string
+    {
+        $length = $column['length'] ?? null;
+
+        if (! isset($column['fixed'])) {
+            return sprintf('VARCHAR(%d)', $length ?? 255);
+        }
+
+        return sprintf('CHAR(%d)', $length ?? 255);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
     protected function getVarcharTypeDeclarationSQLSnippet($length, $fixed)
     {
         return $fixed
@@ -1558,7 +1576,7 @@ SQL
     {
         switch (true) {
             case $lockMode === LockMode::NONE:
-                return $fromClause . ' WITH (NOLOCK)';
+                return $fromClause;
 
             case $lockMode === LockMode::PESSIMISTIC_READ:
                 return $fromClause . ' WITH (HOLDLOCK, ROWLOCK)';
@@ -1672,12 +1690,11 @@ SQL
     protected function getCommentOnTableSQL(string $tableName, ?string $comment): string
     {
         return sprintf(
-            <<<'SQL'
-EXEC sys.sp_addextendedproperty @name=N'MS_Description',
-  @value=N%s, @level0type=N'SCHEMA', @level0name=N'dbo',
-  @level1type=N'TABLE', @level1name=N%s
-SQL
-            ,
+            "
+                EXEC sys.sp_addextendedproperty @name=N'MS_Description',
+                  @value=N%s, @level0type=N'SCHEMA', @level0name=N'dbo',
+                  @level1type=N'TABLE', @level1name=N%s
+            ",
             $this->quoteStringLiteral((string) $comment),
             $this->quoteStringLiteral($tableName)
         );
@@ -1686,16 +1703,15 @@ SQL
     public function getListTableMetadataSQL(string $table): string
     {
         return sprintf(
-            <<<'SQL'
-SELECT
-  p.value AS [table_comment]
-FROM
-  sys.tables AS tbl
-  INNER JOIN sys.extended_properties AS p ON p.major_id=tbl.object_id AND p.minor_id=0 AND p.class=1
-WHERE
-  (tbl.name=N%s and SCHEMA_NAME(tbl.schema_id)=N'dbo' and p.name=N'MS_Description')
-SQL
-            ,
+            "
+                SELECT
+                  p.value AS [table_comment]
+                FROM
+                  sys.tables AS tbl
+                  INNER JOIN sys.extended_properties AS p ON p.major_id=tbl.object_id AND p.minor_id=0 AND p.class=1
+                WHERE
+                  (tbl.name=N%s and SCHEMA_NAME(tbl.schema_id)=N'dbo' and p.name=N'MS_Description')
+            ",
             $this->quoteStringLiteral($table)
         );
     }

@@ -3,7 +3,6 @@
 namespace Doctrine\DBAL\Platforms;
 
 use Doctrine\Common\EventManager;
-use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\Event\SchemaAlterTableAddColumnEventArgs;
 use Doctrine\DBAL\Event\SchemaAlterTableChangeColumnEventArgs;
 use Doctrine\DBAL\Event\SchemaAlterTableEventArgs;
@@ -13,6 +12,7 @@ use Doctrine\DBAL\Event\SchemaCreateTableColumnEventArgs;
 use Doctrine\DBAL\Event\SchemaCreateTableEventArgs;
 use Doctrine\DBAL\Event\SchemaDropTableEventArgs;
 use Doctrine\DBAL\Events;
+use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Platforms\Keywords\KeywordList;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\ColumnDiff;
@@ -26,6 +26,7 @@ use Doctrine\DBAL\Schema\TableDiff;
 use Doctrine\DBAL\TransactionIsolationLevel;
 use Doctrine\DBAL\Types;
 use Doctrine\DBAL\Types\Type;
+use Doctrine\Deprecations\Deprecation;
 use InvalidArgumentException;
 use UnexpectedValueException;
 
@@ -54,9 +55,6 @@ use function strlen;
 use function strpos;
 use function strtolower;
 use function strtoupper;
-use function trigger_error;
-
-use const E_USER_DEPRECATED;
 
 /**
  * Base class for all DatabasePlatforms. The DatabasePlatforms are the central
@@ -132,7 +130,7 @@ abstract class AbstractPlatform
     public const TRIM_BOTH = TrimMode::BOTH;
 
     /** @var string[]|null */
-    protected $doctrineTypeMapping = null;
+    protected $doctrineTypeMapping;
 
     /**
      * Contains a list of all columns that should generate parseable column comments for type-detection
@@ -140,9 +138,9 @@ abstract class AbstractPlatform
      *
      * @var string[]|null
      */
-    protected $doctrineTypeComments = null;
+    protected $doctrineTypeComments;
 
-    /** @var EventManager */
+    /** @var EventManager|null */
     protected $_eventManager;
 
     /**
@@ -169,7 +167,7 @@ abstract class AbstractPlatform
     /**
      * Gets the EventManager used by the Platform.
      *
-     * @return EventManager
+     * @return EventManager|null
      */
     public function getEventManager()
     {
@@ -246,6 +244,17 @@ abstract class AbstractPlatform
     }
 
     /**
+     * Returns the SQL snippet used to declare a column that can
+     * store characters in the ASCII character set
+     *
+     * @param mixed[] $column
+     */
+    public function getAsciiStringTypeDeclarationSQL(array $column): string
+    {
+        return $this->getVarcharTypeDeclarationSQL($column);
+    }
+
+    /**
      * Returns the SQL snippet used to declare a VARCHAR column type.
      *
      * @param mixed[] $column
@@ -290,12 +299,14 @@ abstract class AbstractPlatform
 
         if ($column['length'] > $maxLength) {
             if ($maxLength > 0) {
-                @trigger_error(sprintf(
+                Deprecation::trigger(
+                    'doctrine/dbal',
+                    'https://github.com/doctrine/dbal/issues/3187',
                     'Binary column length %d is greater than supported by the platform (%d).'
                     . ' Reduce the column length or use a BLOB column instead.',
                     $column['length'],
                     $maxLength
-                ), E_USER_DEPRECATED);
+                );
             }
 
             return $this->getBlobTypeDeclarationSQL($column);
@@ -343,11 +354,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     protected function getVarcharTypeDeclarationSQLSnippet($length, $fixed)
     {
-        throw DBALException::notSupported('VARCHARs not supported by Platform.');
+        throw Exception::notSupported('VARCHARs not supported by Platform.');
     }
 
     /**
@@ -358,11 +369,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     protected function getBinaryTypeDeclarationSQLSnippet($length, $fixed)
     {
-        throw DBALException::notSupported('BINARY/VARBINARY column types are not supported by this platform.');
+        throw Exception::notSupported('BINARY/VARBINARY column types are not supported by this platform.');
     }
 
     /**
@@ -398,7 +409,7 @@ abstract class AbstractPlatform
      *
      * @return void
      *
-     * @throws DBALException If the type is not found.
+     * @throws Exception If the type is not found.
      */
     public function registerDoctrineTypeMapping($dbType, $doctrineType)
     {
@@ -407,7 +418,7 @@ abstract class AbstractPlatform
         }
 
         if (! Types\Type::hasType($doctrineType)) {
-            throw DBALException::typeNotFound($doctrineType);
+            throw Exception::typeNotFound($doctrineType);
         }
 
         $dbType                             = strtolower($dbType);
@@ -429,7 +440,7 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException
+     * @throws Exception
      */
     public function getDoctrineTypeMapping($dbType)
     {
@@ -440,7 +451,7 @@ abstract class AbstractPlatform
         $dbType = strtolower($dbType);
 
         if (! isset($this->doctrineTypeMapping[$dbType])) {
-            throw new DBALException(
+            throw new Exception(
                 'Unknown database type ' . $dbType . ' requested, ' . static::class . ' may not support it.'
             );
         }
@@ -639,11 +650,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getRegexpExpression()
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -653,11 +664,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getGuidExpression()
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -885,11 +896,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getLocateExpression($str, $substr, $startPos = false)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -1056,11 +1067,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getDateDiffExpression($date1, $date2)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -1071,7 +1082,7 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getDateAddSecondsExpression($date, $seconds)
     {
@@ -1086,7 +1097,7 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getDateSubSecondsExpression($date, $seconds)
     {
@@ -1101,7 +1112,7 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getDateAddMinutesExpression($date, $minutes)
     {
@@ -1116,7 +1127,7 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getDateSubMinutesExpression($date, $minutes)
     {
@@ -1131,7 +1142,7 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getDateAddHourExpression($date, $hours)
     {
@@ -1146,7 +1157,7 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getDateSubHourExpression($date, $hours)
     {
@@ -1161,7 +1172,7 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getDateAddDaysExpression($date, $days)
     {
@@ -1176,7 +1187,7 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getDateSubDaysExpression($date, $days)
     {
@@ -1191,7 +1202,7 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getDateAddWeeksExpression($date, $weeks)
     {
@@ -1206,7 +1217,7 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getDateSubWeeksExpression($date, $weeks)
     {
@@ -1221,7 +1232,7 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getDateAddMonthExpression($date, $months)
     {
@@ -1236,7 +1247,7 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getDateSubMonthExpression($date, $months)
     {
@@ -1251,7 +1262,7 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getDateAddQuartersExpression($date, $quarters)
     {
@@ -1266,7 +1277,7 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getDateSubQuartersExpression($date, $quarters)
     {
@@ -1281,7 +1292,7 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getDateAddYearsExpression($date, $years)
     {
@@ -1296,7 +1307,7 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getDateSubYearsExpression($date, $years)
     {
@@ -1314,11 +1325,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     protected function getDateArithmeticIntervalExpression($date, $operator, $interval, $unit)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -1541,7 +1552,7 @@ abstract class AbstractPlatform
      *
      * @return string[] The sequence of SQL statements.
      *
-     * @throws DBALException
+     * @throws Exception
      * @throws InvalidArgumentException
      */
     public function getCreateTableSQL(Table $table, $createFlags = self::CREATE_INDEXES)
@@ -1553,7 +1564,7 @@ abstract class AbstractPlatform
         }
 
         if (count($table->getColumns()) === 0) {
-            throw DBALException::noColumnsSpecifiedForTable($table->getName());
+            throw Exception::noColumnsSpecifiedForTable($table->getName());
         }
 
         $tableName                    = $table->getQuotedName($this);
@@ -1591,8 +1602,10 @@ abstract class AbstractPlatform
                 }
             }
 
+            $name = $column->getQuotedName($this);
+
             $columnData = array_merge($column->toArray(), [
-                'name' => $column->getQuotedName($this),
+                'name' => $name,
                 'version' => $column->hasPlatformOption('version') ? $column->getPlatformOption('version') : false,
                 'comment' => $this->getColumnComment($column),
             ]);
@@ -1605,7 +1618,7 @@ abstract class AbstractPlatform
                 $columnData['primary'] = true;
             }
 
-            $columns[$columnData['name']] = $columnData;
+            $columns[$name] = $columnData;
         }
 
         if (($createFlags & self::CREATE_FOREIGNKEYS) > 0) {
@@ -1682,12 +1695,12 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getInlineColumnCommentSQL($comment)
     {
         if (! $this->supportsInlineColumnComments()) {
-            throw DBALException::notSupported(__METHOD__);
+            throw Exception::notSupported(__METHOD__);
         }
 
         return 'COMMENT ' . $this->quoteStringLiteral($comment);
@@ -1731,7 +1744,7 @@ abstract class AbstractPlatform
 
         $query .= ')';
 
-        $sql[] = $query;
+        $sql = [$query];
 
         if (isset($options['foreignKeys'])) {
             foreach ((array) $options['foreignKeys'] as $definition) {
@@ -1755,11 +1768,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getCreateSequenceSQL(Sequence $sequence)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -1767,11 +1780,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getAlterSequenceSQL(Sequence $sequence)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -1895,11 +1908,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getCreateSchemaSQL($schemaName)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -1964,11 +1977,11 @@ abstract class AbstractPlatform
      *
      * @return string[]
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getAlterTableSQL(TableDiff $diff)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -2651,10 +2664,18 @@ abstract class AbstractPlatform
      * Whether the platform prefers sequences for ID generation.
      * Subclasses should override this method to return TRUE if they prefer sequences.
      *
+     * @deprecated
+     *
      * @return bool
      */
     public function prefersSequences()
     {
+        Deprecation::trigger(
+            'doctrine/dbal',
+            'https://github.com/doctrine/dbal/pull/4229',
+            'AbstractPlatform::prefersSequences() is deprecated without replacement and removed in DBAL 3.0'
+        );
+
         return false;
     }
 
@@ -2791,11 +2812,11 @@ abstract class AbstractPlatform
     /**
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getListDatabasesSQL()
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -2803,11 +2824,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getListNamespacesSQL()
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -2815,11 +2836,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getListSequencesSQL($database)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -2827,11 +2848,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getListTableConstraintsSQL($table)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -2840,31 +2861,31 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getListTableColumnsSQL($table, $database = null)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getListTablesSQL()
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getListUsersSQL()
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -2874,11 +2895,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getListViewsSQL($database)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -2896,11 +2917,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getListTableIndexesSQL($table, $database = null)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -2908,11 +2929,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getListTableForeignKeysSQL($table)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -2921,11 +2942,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getCreateViewSQL($name, $sql)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -2933,11 +2954,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getDropViewSQL($name)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -2947,11 +2968,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getDropSequenceSQL($sequence)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -2959,11 +2980,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getSequenceNextValSQL($sequence)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -2973,11 +2994,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getCreateDatabaseSQL($database)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -2987,11 +3008,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getSetTransactionIsolationSQL($level)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -3002,11 +3023,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getDateTimeTypeDeclarationSQL(array $column)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -3029,11 +3050,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getDateTypeDeclarationSQL(array $column)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -3044,11 +3065,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getTimeTypeDeclarationSQL(array $column)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -3122,11 +3143,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getIdentitySequenceName($tableName, $columnName)
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -3220,10 +3241,18 @@ abstract class AbstractPlatform
     /**
      * Whether this platform supports onUpdate in foreign key constraints.
      *
+     * @deprecated
+     *
      * @return bool
      */
     public function supportsForeignKeyOnUpdate()
     {
+        Deprecation::trigger(
+            'doctrine/dbal',
+            'https://github.com/doctrine/dbal/pull/4229',
+            'AbstractPlatform::supportsForeignKeyOnUpdate() is deprecated without replacement and removed in DBAL 3.0'
+        );
+
         return $this->supportsForeignKeyConstraints();
     }
 
@@ -3255,11 +3284,11 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
      */
     public function getDefaultSchemaName()
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
@@ -3409,7 +3438,7 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException
+     * @throws Exception
      */
     final public function modifyLimitQuery($query, $limit, $offset = null)
     {
@@ -3420,14 +3449,14 @@ abstract class AbstractPlatform
         $offset = (int) $offset;
 
         if ($offset < 0) {
-            throw new DBALException(sprintf(
+            throw new Exception(sprintf(
                 'Offset must be a positive integer or zero, %d given',
                 $offset
             ));
         }
 
         if ($offset > 0 && ! $this->supportsLimitOffset()) {
-            throw new DBALException(sprintf(
+            throw new Exception(sprintf(
                 'Platform %s does not support offset values in limit queries.',
                 $this->getName()
             ));
@@ -3471,12 +3500,21 @@ abstract class AbstractPlatform
     /**
      * Gets the character casing of a column in an SQL result set of this platform.
      *
+     * @deprecated
+     *
      * @param string $column The column name for which to get the correct character casing.
      *
      * @return string The column name in the character casing used in SQL result sets.
      */
     public function getSQLResultCasing($column)
     {
+        Deprecation::trigger(
+            'doctrine/dbal',
+            'https://github.com/doctrine/dbal/pull/4229',
+            'AbstractPlatform::getSQLResultCasing is deprecated without replacement and removed in DBAL 3.' .
+            'Use Portability\Connection with PORTABILITY_FIX_CASE to get portable result cases.'
+        );
+
         return $column;
     }
 
@@ -3484,12 +3522,20 @@ abstract class AbstractPlatform
      * Makes any fixes to a name of a schema element (table, sequence, ...) that are required
      * by restrictions of the platform, like a maximum length.
      *
+     * @deprecated
+     *
      * @param string $schemaElementName
      *
      * @return string
      */
     public function fixSchemaElementName($schemaElementName)
     {
+        Deprecation::trigger(
+            'doctrine/dbal',
+            'https://github.com/doctrine/dbal/pull/4132',
+            'AbstractPlatform::fixSchemaElementName is deprecated with no replacement and removed in DBAL 3.0'
+        );
+
         return $schemaElementName;
     }
 
@@ -3587,7 +3633,7 @@ abstract class AbstractPlatform
      *
      * @return KeywordList
      *
-     * @throws DBALException If no keyword list is specified.
+     * @throws Exception If no keyword list is specified.
      */
     final public function getReservedKeywordsList()
     {
@@ -3599,7 +3645,7 @@ abstract class AbstractPlatform
         $class    = $this->getReservedKeywordsClass();
         $keywords = new $class();
         if (! $keywords instanceof KeywordList) {
-            throw DBALException::notSupported(__METHOD__);
+            throw Exception::notSupported(__METHOD__);
         }
 
         // Store the instance so it doesn't need to be generated on every request.
@@ -3613,11 +3659,13 @@ abstract class AbstractPlatform
      *
      * @return string
      *
-     * @throws DBALException If not supported on this platform.
+     * @throws Exception If not supported on this platform.
+     *
+     * @psalm-return class-string<KeywordList>
      */
     protected function getReservedKeywordsClass()
     {
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**

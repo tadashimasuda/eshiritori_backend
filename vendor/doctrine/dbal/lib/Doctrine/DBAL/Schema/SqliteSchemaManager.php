@@ -2,9 +2,8 @@
 
 namespace Doctrine\DBAL\Schema;
 
-use Doctrine\DBAL\DBALException;
 use Doctrine\DBAL\DriverManager;
-use Doctrine\DBAL\FetchMode;
+use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Types\StringType;
 use Doctrine\DBAL\Types\TextType;
 use Doctrine\DBAL\Types\Type;
@@ -53,13 +52,12 @@ class SqliteSchemaManager extends AbstractSchemaManager
      */
     public function createDatabase($database)
     {
-        $params  = $this->_conn->getParams();
-        $driver  = $params['driver'];
-        $options = [
-            'driver' => $driver,
-            'path' => $database,
-        ];
-        $conn    = DriverManager::getConnection($options);
+        $params = $this->_conn->getParams();
+
+        $params['path'] = $database;
+        unset($params['memory']);
+
+        $conn = DriverManager::getConnection($params);
         $conn->connect();
         $conn->close();
     }
@@ -118,7 +116,7 @@ class SqliteSchemaManager extends AbstractSchemaManager
         }
 
         $sql              = $this->_platform->getListTableForeignKeysSQL($table, $database);
-        $tableForeignKeys = $this->_conn->fetchAll($sql);
+        $tableForeignKeys = $this->_conn->fetchAllAssociative($sql);
 
         if (! empty($tableForeignKeys)) {
             $createSql = $this->getCreateTableSQL($table);
@@ -177,19 +175,26 @@ class SqliteSchemaManager extends AbstractSchemaManager
         $indexBuffer = [];
 
         // fetch primary
-        $stmt       = $this->_conn->executeQuery(sprintf(
+        $indexArray = $this->_conn->fetchAllAssociative(sprintf(
             'PRAGMA TABLE_INFO (%s)',
             $this->_conn->quote($tableName)
         ));
-        $indexArray = $stmt->fetchAll(FetchMode::ASSOCIATIVE);
 
-        usort($indexArray, static function ($a, $b) {
-            if ($a['pk'] === $b['pk']) {
-                return $a['cid'] - $b['cid'];
+        usort(
+            $indexArray,
+            /**
+             * @param array<string,mixed> $a
+             * @param array<string,mixed> $b
+             */
+            static function (array $a, array $b): int {
+                if ($a['pk'] === $b['pk']) {
+                    return $a['cid'] - $b['cid'];
+                }
+
+                return $a['pk'] - $b['pk'];
             }
+        );
 
-            return $a['pk'] - $b['pk'];
-        });
         foreach ($indexArray as $indexColumnRow) {
             if ($indexColumnRow['pk'] === '0') {
                 continue;
@@ -216,11 +221,10 @@ class SqliteSchemaManager extends AbstractSchemaManager
             $idx['primary']    = false;
             $idx['non_unique'] = ! $tableIndex['unique'];
 
-                $stmt       = $this->_conn->executeQuery(sprintf(
-                    'PRAGMA INDEX_INFO (%s)',
-                    $this->_conn->quote($keyName)
-                ));
-                $indexArray = $stmt->fetchAll(FetchMode::ASSOCIATIVE);
+            $indexArray = $this->_conn->fetchAllAssociative(sprintf(
+                'PRAGMA INDEX_INFO (%s)',
+                $this->_conn->quote($keyName)
+            ));
 
             foreach ($indexArray as $indexColumnRow) {
                 $idx['column_name'] = $indexColumnRow['name'];
@@ -380,7 +384,7 @@ class SqliteSchemaManager extends AbstractSchemaManager
 
         $options = [
             'length'   => $length,
-            'unsigned' => (bool) $unsigned,
+            'unsigned' => $unsigned,
             'fixed'    => $fixed,
             'notnull'  => $notnull,
             'default'  => $default,
@@ -458,7 +462,7 @@ class SqliteSchemaManager extends AbstractSchemaManager
      *
      * @return TableDiff
      *
-     * @throws DBALException
+     * @throws Exception
      */
     private function getTableDiffForAlterForeignKey($table)
     {
@@ -466,7 +470,7 @@ class SqliteSchemaManager extends AbstractSchemaManager
             $tableDetails = $this->tryMethod('listTableDetails', $table);
 
             if ($tableDetails === false) {
-                throw new DBALException(
+                throw new Exception(
                     sprintf('Sqlite schema manager requires to modify foreign keys table definition "%s".', $table)
                 );
             }

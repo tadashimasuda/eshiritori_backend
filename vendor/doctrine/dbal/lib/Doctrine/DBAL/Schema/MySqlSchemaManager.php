@@ -91,7 +91,10 @@ class MySqlSchemaManager extends AbstractSchemaManager
                 $v['flags'] = ['SPATIAL'];
             }
 
-            $v['length'] = isset($v['sub_part']) ? (int) $v['sub_part'] : null;
+            // Ignore prohibited prefix `length` for spatial index
+            if (strpos($v['index_type'], 'SPATIAL') === false) {
+                $v['length'] = isset($v['sub_part']) ? (int) $v['sub_part'] : null;
+            }
 
             $tableIndexes[$k] = $v;
         }
@@ -328,7 +331,7 @@ class MySqlSchemaManager extends AbstractSchemaManager
         assert($platform instanceof MySqlPlatform);
         $sql = $platform->getListTableMetadataSQL($name);
 
-        $tableOptions = $this->_conn->fetchAssoc($sql);
+        $tableOptions = $this->_conn->fetchAssociative($sql);
 
         if ($tableOptions === false) {
             return $table;

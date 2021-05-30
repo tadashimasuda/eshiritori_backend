@@ -2,7 +2,7 @@
 
 namespace Doctrine\DBAL\Platforms;
 
-use Doctrine\DBAL\DBALException;
+use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\LockMode;
 use Doctrine\DBAL\Schema\Column;
 use Doctrine\DBAL\Schema\ColumnDiff;
@@ -13,6 +13,7 @@ use Doctrine\DBAL\Schema\Index;
 use Doctrine\DBAL\Schema\Table;
 use Doctrine\DBAL\Schema\TableDiff;
 use Doctrine\DBAL\TransactionIsolationLevel;
+use Doctrine\Deprecations\Deprecation;
 use InvalidArgumentException;
 
 use function array_merge;
@@ -35,6 +36,8 @@ use function substr;
 /**
  * The SQLAnywherePlatform provides the behavior, features and SQL dialect of the
  * SAP Sybase SQL Anywhere 10 database platform.
+ *
+ * @deprecated Use SQLAnywhere 16 or newer
  */
 class SQLAnywherePlatform extends AbstractPlatform
 {
@@ -50,7 +53,7 @@ class SQLAnywherePlatform extends AbstractPlatform
     {
         switch (true) {
             case $lockMode === LockMode::NONE:
-                return $fromClause . ' WITH (NOLOCK)';
+                return $fromClause;
 
             case $lockMode === LockMode::PESSIMISTIC_READ:
                 return $fromClause . ' WITH (UPDLOCK)';
@@ -70,6 +73,12 @@ class SQLAnywherePlatform extends AbstractPlatform
      */
     public function fixSchemaElementName($schemaElementName)
     {
+        Deprecation::trigger(
+            'doctrine/dbal',
+            'https://github.com/doctrine/dbal/pull/4132',
+            'AbstractPlatform::fixSchemaElementName is deprecated with no replacement and removed in DBAL 3.0'
+        );
+
         $maxIdentifierLength = $this->getMaxIdentifierLength();
 
         if (strlen($schemaElementName) > $maxIdentifierLength) {
@@ -374,7 +383,7 @@ class SQLAnywherePlatform extends AbstractPlatform
      */
     public function getConcatExpression()
     {
-        return 'STRING(' . implode(', ', (array) func_get_args()) . ')';
+        return 'STRING(' . implode(', ', func_get_args()) . ')';
     }
 
     /**
@@ -689,7 +698,7 @@ class SQLAnywherePlatform extends AbstractPlatform
     public function getIndexDeclarationSQL($name, Index $index)
     {
         // Index declaration in statements like CREATE TABLE is not supported.
-        throw DBALException::notSupported(__METHOD__);
+        throw Exception::notSupported(__METHOD__);
     }
 
     /**
