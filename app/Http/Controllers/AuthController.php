@@ -9,6 +9,7 @@ use App\Http\Requests\LoginUserRequest;
 use App\Http\Resources\User as UserResourse;
 use App\Http\Resources\UserShow as UserShowResourse;
 
+use Validator;
 use Socialite;
 use App\User;
 use Abraham\TwitterOAuth\TwitterOAuth;
@@ -46,21 +47,59 @@ class AuthController extends Controller
         ]);
     }
     
-    public function store(CreateUserRequest $request){
+    public function store(Request $request){
+        $validator = Validator::make($request->all(), 
+            [
+                'email' => ' required | unique:users,email|email ',
+                'name' => 'required',
+                'password' => 'required | min:6 | confirmed',
+            ],
+            [
+                'name.required'  => '名前を入力してください。',
+                'email.required'  => 'メールアドレスを入力してください。',
+                'email.unique'  => 'このメールアドレスはすでに使われています。',
+                'email.email'  => 'メールアドレスの形式で入力してください。',
+                'password.required'  => 'パスワードを入力してください。',
+                'password.confirmed'  => 'パスワードが一致しません',
+                'password.min'       => 'パスワードは6文字以上でお願いします。',
+            ]
+        );
+          if ($validator->fails()) {
+            return response()->json([
+                'errors' => $validator->errors()
+            ], 422);
+          } else {
+            $user = User::create([
+                'name'=> $request->name,
+                'password'=> bcrypt($request->password),
+                'email'=> $request->email
+            ]);
+            return response()->json([
+                'user' => $user,
+                'access_token' => $user->createToken(null, ['*'])->accessToken,
+            ]);
+          }
         
-        $user = User::create([
-            'name'=> $request->name,
-            'password'=> bcrypt($request->password),
-            'email'=> $request->email
-        ]);
-        return response()->json([
-            'user' => $user,
-            'access_token' => $user->createToken(null, ['*'])->accessToken,
-        ]);
     }
 
-    public function login(LoginUserRequest $request){
-        
+    public function login(Request $request){
+        $validator = Validator::make($request->all(), 
+            [
+                'email' => ' required | unique:users,email|email ',
+                'password' => 'required | min:6 | confirmed',
+            ],
+            [
+                'email.required'  => 'メールアドレスを入力してください。',
+                'email.email'  => 'メールアドレスの形式で入力してください。',
+                'password.required'  => 'パスワードを入力してください。',
+                'password.min'       => 'パスワードは6文字以上でお願いします。',
+            ]
+        );
+        if ($validator->fails()) {
+        return response()->json([
+            'errors' => $validator->errors()
+        ], 422);
+        } else{
         $user = User::where('email', $request->email)->first();
         if(!$token = auth()->attempt($request->only(['email','password']))){
             return response()->json([
@@ -74,6 +113,8 @@ class AuthController extends Controller
                 'access_token' => $user->createToken(null, ['*'])->accessToken,
             ],200);
         }
+        }
+        
     }
 
     public function user(Request $request){
