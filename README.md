@@ -14,9 +14,12 @@ frontend( [github]:https://github.com/tadashimasuda/eshiritori_frontend )
 5. Twitter APIからユーザーのフォロワー取得
 6. 設置済みのツイートリンクからツイート
 
-![eshiritori](https://user-images.githubusercontent.com/51233312/117447425-7b082600-af78-11eb-8969-79dfd9b8b9e5.png)
+<img src="https://user-images.githubusercontent.com/51233312/117447425-7b082600-af78-11eb-8969-79dfd9b8b9e5.png" width="500px">
+<img src="https://user-images.githubusercontent.com/51233312/120349355-033fd800-c339-11eb-834e-426b67463246.png" width="500px">
 
 ## 注力した点(Backend)
+- インフラにAWSを用いた。
+    - EC2,RDS,VPCを用いてbackendをデプロイに挑戦した。
 - N+1の解決
    - 無駄なSQLの発行を改善した。
 - 認可機能の実装
